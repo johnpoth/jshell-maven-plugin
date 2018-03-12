@@ -35,6 +35,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
+import static java.util.stream.Collectors.toList;
+
 
 @Mojo( name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST )
 public class MyMojo extends AbstractMojo
@@ -53,22 +55,15 @@ public class MyMojo extends AbstractMojo
         try {
             Thread.currentThread().setContextClassLoader(classLoader);
             ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
-            Iterator<Tool> iterator = sl.iterator();
-            Tool jshell = getJshell(iterator);
+            Tool jshell = sl.stream()
+                    .filter(a -> a.get().name().equals("jshell"))
+                    .findAny()
+                    .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
+                    .get();
             String[] args = new String[]{"--class-path", cp};
             jshell.run(System.in, System.out, System.err, args);
         } finally {
             Thread.currentThread().setContextClassLoader(contextClassLoader);
         }
-    }
-
-    private Tool getJshell(Iterator<Tool> iter) {
-        while (iter.hasNext()) {
-            Tool next = iter.next();
-            if(next.name().equals("jshell")){
-                return next;
-            }
-        }
-        throw new RuntimeException("No JShell service providers found!");
     }
 }
