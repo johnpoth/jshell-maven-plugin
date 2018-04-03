@@ -36,15 +36,26 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 
 
 @Mojo( name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST )
-public class MyMojo extends AbstractMojo
+public class JShellMojo extends AbstractMojo
 {
 
     @Parameter(defaultValue = "${project.runtimeClasspathElements}", property = "rcp", required = true)
     private List<String> runtimeClasspathElements;
 
+    @Parameter(defaultValue = "${project.testClasspathElements}", property = "trcp", required = true)
+    private List<String> testClasspathElements;
+
+    @Parameter(defaultValue = "false", property = "testClasspath")
+    private boolean testClasspath;
+
     public void execute() throws MojoExecutionException {
-        String cp = runtimeClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + ":" + b);
-        System.out.println("Using rcp:" + cp);
+        String cp;
+        if (testClasspath) {
+            cp = testClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + ":" + b);
+        } else {
+            cp = runtimeClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + ":" + b);
+        }
+        getLog().info("Using classpath:" + cp);
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
         ClassLoader classLoader = module.get().getClassLoader();
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved

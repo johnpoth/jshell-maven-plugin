@@ -1,0 +1,26 @@
+= jshell-maven-plugin
+
+Maven Plugin for the Java Shell Tool ( https://docs.oracle.com/javase/9/jshell/introduction-jshell.htm[JShell] )
+
+== Usage
+
+[source,shell]
+----
+$mvn com.github.johnpoth:jshell-maven-plugin:1.0-SNAPSHOT:run
+|  Welcome to JShell -- Version 10
+|  For an introduction type: /help intro
+jshell>
+----
+
+Now you can start using your project's *runtime* classpath:
+
+[source,shell]
+----
+jshell> var foo = new org.apache.camel.component.beanclass.ClassComponent()
+foo ==> org.apache.camel.component.beanclass.ClassComponent@4d1b0d2a
+jshell>
+----
+
+To you use your project's test classpath, add *-DtestClasspath* to the command.
+
+Works on Java 9 and 10. Enjoy!
