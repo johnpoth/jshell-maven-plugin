@@ -108,7 +108,6 @@
         <artifactId>maven-plugin-plugin</artifactId>
         <version>3.5.1</version>
         <configuration>
-          <goalPrefix>jshell-maven-plugin</goalPrefix>
           <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
         </configuration>
         <executions>
