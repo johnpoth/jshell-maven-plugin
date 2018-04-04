@@ -6,7 +6,7 @@ Maven Plugin for the Java Shell Tool ( https://docs.oracle.com/javase/9/jshell/i
 
 [source,shell]
 ----
-$mvn com.github.johnpoth:jshell-maven-plugin:1.0-SNAPSHOT:run
+$mvn com.github.johnpoth:jshell-maven-plugin:1.0:run
 |  Welcome to JShell -- Version 10
 |  For an introduction type: /help intro
 jshell>

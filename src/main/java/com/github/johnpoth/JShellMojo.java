@@ -48,7 +48,7 @@ public class JShellMojo extends AbstractMojo
         } else {
             cp = runtimeClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + ":" + b);
         }
-        getLog().info("Using classpath:" + cp);
+        getLog().debug("Using classpath:" + cp);
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
         ClassLoader classLoader = module.get().getClassLoader();
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
