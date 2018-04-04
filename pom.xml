@@ -33,7 +33,7 @@
     <url>scm:git:git@github.com:johnpoth/jshell-maven-plugin.git</url>
     <connection>scm:git:git@github.com:johnpoth/jshell-maven-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:johnpoth/jshell-maven-plugin.git</developerConnection>
-    <tag>jshell-maven-plugin-1.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
