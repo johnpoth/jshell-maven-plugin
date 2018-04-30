@@ -5,7 +5,7 @@ module com.github.johnpoth.jshell {
    requires maven.plugin.api;
    requires maven.plugin.annotations;
 
-   exports com.github.johnpoth;
+   exports com.github.johnpoth.jshell;
 
    uses javax.tools.Tool;
 }
