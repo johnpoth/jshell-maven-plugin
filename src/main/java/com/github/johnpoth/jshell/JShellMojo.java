@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.johnpoth;
+package com.github.johnpoth.jshell;
 
 import javax.tools.Tool;
 import java.util.List;
@@ -33,8 +33,8 @@ public class JShellMojo extends AbstractMojo
 {
 
     private static final pathSeparator;
-    
-    static 
+
+    static
     {
         //Guard against possible JVM that doesn't supply this property or user deletion of it for some reason
         //In this case then assume UNIX-style.
@@ -61,7 +61,7 @@ public class JShellMojo extends AbstractMojo
     public void execute() throws MojoExecutionException {
         String cp;
         if (testClasspath) {
-            cp = testClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + pathSeparator + b);
+            cp = testClasspathElements.stream().reduce(testClasspathElements.get(0), (a, b) -> a + pathSeparator + b);
         } else {
             cp = runtimeClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + pathSeparator + b);
         }
