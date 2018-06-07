@@ -32,6 +32,23 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 public class JShellMojo extends AbstractMojo
 {
 
+    private static final pathSeparator;
+    
+    static 
+    {
+        //Guard against possible JVM that doesn't supply this property or user deletion of it for some reason
+        //In this case then assume UNIX-style.
+        String sep = System.getProperties().getProperty("path.separator");
+        if(sep == null || sep.trim().length() == 0)
+        {
+            pathSeparator = ":";
+        }
+        else
+        {
+            pathSeparator = sep;
+        }
+    }
+
     @Parameter(defaultValue = "${project.runtimeClasspathElements}", property = "rcp", required = true)
     private List<String> runtimeClasspathElements;
 
@@ -44,9 +61,9 @@ public class JShellMojo extends AbstractMojo
     public void execute() throws MojoExecutionException {
         String cp;
         if (testClasspath) {
-            cp = testClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + ":" + b);
+            cp = testClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + pathSeparator + b);
         } else {
-            cp = runtimeClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + ":" + b);
+            cp = runtimeClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + pathSeparator + b);
         }
         getLog().debug("Using classpath:" + cp);
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
