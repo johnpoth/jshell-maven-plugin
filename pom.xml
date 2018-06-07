@@ -20,6 +20,9 @@
       <email>poth.john@gmail.com</email>
       <timezone>+1</timezone>
     </developer>
+    <developer>
+      <name>Sean McNamara</name>
+    </developer>
   </developers>
 
   <licenses>
