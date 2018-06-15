@@ -24,3 +24,29 @@ jshell>
 To you use your project's test classpath, add *-DtestClasspath* to the command.
 
 Works on Java 9 and 10. Enjoy!
+
+== Adding to pom.xml
+
+To use the plugin's shortened prefix *jshell*, declare the plugin in your pom.xml
+
+[source,xml]
+----
+<pluginManagement>
+  <plugin>
+      <groupId>com.github.johnpoth</groupId>
+      <artifactId>jshell-maven-plugin</artifactId>
+      <version>1.1</version>
+    </plugin>
+  </plugins>
+</pluginManagement>
+----
+
+And now you'll be able to run it by typing *mvn jshell:run*
+
+[source,shell]
+----
+$mvn jshell:run
+|  Welcome to JShell -- Version 10
+|  For an introduction type: /help intro
+jshell>
+----
