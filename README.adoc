@@ -23,7 +23,7 @@ jshell>
 
 To you use your project's test classpath, add *-DtestClasspath* to the command.
 
-Works on Java 9 and 10. Enjoy!
+Works on Java 9, 10 and 11+ Enjoy!
 
 == Adding to pom.xml
 
@@ -32,7 +32,8 @@ To use the plugin's shortened prefix *jshell*, declare the plugin in your pom.xm
 [source,xml]
 ----
 <pluginManagement>
-  <plugin>
+  <plugins>
+    <plugin>
       <groupId>com.github.johnpoth</groupId>
       <artifactId>jshell-maven-plugin</artifactId>
       <version>1.1</version>
