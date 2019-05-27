@@ -18,6 +18,7 @@ package com.github.johnpoth.jshell;
 
 import javax.tools.Tool;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -42,6 +43,28 @@ public class JShellMojo extends AbstractMojo
     @Parameter(defaultValue = "false", property = "testClasspath")
     private boolean testClasspath;
 
+    @Parameter(defaultValue = "true", property = "jshell.useProjectClasspath")
+    private boolean useProjectClasspath;
+
+    @Parameter(property = "jshell.class-path")
+    private String classpath;
+
+    @Parameter(property = "jshell.module-path")
+    private String modulepath;
+
+    @Parameter(property = "jshell.add-modules")
+    private String addModules;
+
+    @Parameter(property = "jshell.add-exports")
+    private String addExports;
+
+    @Parameter(property = "jshell.scripts")
+    private List<String> scripts = new ArrayList<>();
+
+    // additional options that may be added in future Java releases.
+    @Parameter(property = "jshell.options")
+    private List<String> options = new ArrayList<>();
+
     public void execute() throws MojoExecutionException {
         String cp;
         if (testClasspath) {
@@ -62,10 +85,59 @@ public class JShellMojo extends AbstractMojo
                     .findAny()
                     .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
                     .get();
-            String[] args = new String[]{"--class-path", cp};
+            String[] args = addArguments(cp);
             jshell.run(System.in, System.out, System.err, args);
         } finally {
             Thread.currentThread().setContextClassLoader(contextClassLoader);
         }
+    }
+
+    private String[] addArguments(String cp) {
+        int size = getArgumentsSize();
+        String[] args = new String [size + options.size() + scripts.size()];
+        int i = 0;
+        if (useProjectClasspath) {
+            args[i++] = "--class-path";
+            args[i++] = cp;
+        } else if (classpath != null ){
+            args[i++] = "--class-path";
+            args[i++] = classpath;
+        }
+        if (modulepath != null){
+            args[i++] = "--module-path";
+            args[i++] = modulepath;
+        }
+        if (addModules!= null){
+            args[i++] = "--add-modules";
+            args[i++] = modulepath;
+        }
+        if (addExports!= null){
+            args[i++] = "--add-exports";
+            args[i++] = modulepath;
+        }
+        for (String option : this.options) {
+            args[i++] = option;
+        }
+        for (String script : scripts) {
+            args[i++] = script;
+        }
+        return args;
+    }
+
+    private int getArgumentsSize() {
+        int size = 0;
+        if (useProjectClasspath || classpath != null) {
+            size += 2;
+        }
+        if (modulepath != null) {
+            size += 2;
+        }
+        if (addModules != null) {
+            size += 2;
+        }
+        if (addExports != null) {
+            size += 2;
+        }
+        return size;
     }
 }
