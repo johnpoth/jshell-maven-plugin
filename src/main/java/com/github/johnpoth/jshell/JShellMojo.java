@@ -68,9 +68,13 @@ public class JShellMojo extends AbstractMojo
     public void execute() throws MojoExecutionException {
         String cp;
         if (testClasspath) {
-            cp = testClasspathElements.stream().reduce(testClasspathElements.get(0), (a, b) -> a + File.pathSeparator + b);
+            cp = testClasspathElements.stream()
+                    .filter(s -> s.endsWith(".jar"))
+                    .reduce(testClasspathElements.get(0), (a, b) -> a + File.pathSeparator + b);
         } else {
-            cp = runtimeClasspathElements.stream().reduce(runtimeClasspathElements.get(0), (a, b) -> a + File.pathSeparator  + b);
+            cp = runtimeClasspathElements.stream()
+                    .filter(s -> s.endsWith(".jar"))
+                    .reduce(runtimeClasspathElements.get(0), (a, b) -> a + File.pathSeparator  + b);
         }
         getLog().debug("Using classpath:" + cp);
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
