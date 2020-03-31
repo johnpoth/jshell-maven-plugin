@@ -5,7 +5,7 @@
 
   <groupId>com.github.johnpoth</groupId>
   <artifactId>jshell-maven-plugin</artifactId>
-  <version>1.3-SNAPSHOT</version>
+  <version>1.3</version>
   <packaging>maven-plugin</packaging>
   <description>JShell Maven Plugin</description>
 
@@ -36,7 +36,7 @@
     <url>scm:git:git@github.com:johnpoth/jshell-maven-plugin.git</url>
     <connection>scm:git:git@github.com:johnpoth/jshell-maven-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:johnpoth/jshell-maven-plugin.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>jshell-maven-plugin-1.3</tag>
   </scm>
 
   <distributionManagement>
