@@ -2,11 +2,11 @@
 
 Maven Plugin for the Java Shell Tool ( https://docs.oracle.com/javase/9/jshell/introduction-jshell.htm[JShell] )
 
-== Usage
+== Run it
 
 [source,shell]
 ----
-$mvn com.github.johnpoth:jshell-maven-plugin:1.1:run
+$mvn compile com.github.johnpoth:jshell-maven-plugin:1.3:run
 |  Welcome to JShell -- Version 10
 |  For an introduction type: /help intro
 jshell>
@@ -21,7 +21,23 @@ foo ==> org.apache.camel.component.beanclass.ClassComponent@4d1b0d2a
 jshell>
 ----
 
-To you use your project's test classpath, add *-DtestClasspath* to the command.
+To you use your project's test classpath, add *-DtestClasspath* to the command and make sure you have compiled your test classes:
+[source,shell]
+----
+$mvn test-compile com.github.johnpoth:jshell-maven-plugin:1.3:run
+----
+
+If you notice some resources missing, you may have to invoke the `install` phase instead:
+[source,shell]
+----
+$mvn install com.github.johnpoth:jshell-maven-plugin:1.3:run -DskipTests
+----
+
+Once you project has been built properly, and you haven't updated your source files, you can skip the building phase and invoke the plugin directly:
+[source,shell]
+----
+$mvn com.github.johnpoth:jshell-maven-plugin:1.3:run
+----
 
 == Options
 
