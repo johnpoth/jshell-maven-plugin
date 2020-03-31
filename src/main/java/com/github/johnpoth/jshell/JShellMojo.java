@@ -18,10 +18,14 @@ package com.github.johnpoth.jshell;
 
 import javax.tools.Tool;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -66,17 +70,8 @@ public class JShellMojo extends AbstractMojo
     private List<String> options = new ArrayList<>();
 
     public void execute() throws MojoExecutionException {
-        String cp;
-        if (testClasspath) {
-            cp = testClasspathElements.stream()
-                    .filter(s -> s.endsWith(".jar"))
-                    .reduce(testClasspathElements.get(0), (a, b) -> a + File.pathSeparator + b);
-        } else {
-            cp = runtimeClasspathElements.stream()
-                    .filter(s -> s.endsWith(".jar"))
-                    .reduce(runtimeClasspathElements.get(0), (a, b) -> a + File.pathSeparator  + b);
-        }
-        getLog().debug("Using classpath:" + cp);
+        String cp = buildClasspath();
+        getLog().debug("Using classpath: " + cp);
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
         ClassLoader classLoader = module.get().getClassLoader();
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
@@ -96,52 +91,68 @@ public class JShellMojo extends AbstractMojo
         }
     }
 
-    private String[] addArguments(String cp) {
-        int size = getArgumentsSize();
-        String[] args = new String [size + options.size() + scripts.size()];
-        int i = 0;
-        if (useProjectClasspath) {
-            args[i++] = "--class-path";
-            args[i++] = cp;
-        } else if (classpath != null ){
-            args[i++] = "--class-path";
-            args[i++] = classpath;
+    private String buildClasspath() {
+        if (testClasspath) {
+            testClasspathElements = filterClasspath(testClasspathElements);
+            return testClasspathElements.stream()
+                    .reduce("", (a, b) -> a + File.pathSeparator + b);
+        } else {
+            runtimeClasspathElements = filterClasspath(runtimeClasspathElements);
+            return filterClasspath(runtimeClasspathElements).stream()
+                    .reduce("", (a, b) -> a + File.pathSeparator  + b);
         }
-        if (modulepath != null){
-            args[i++] = "--module-path";
-            args[i++] = modulepath;
-        }
-        if (addModules!= null){
-            args[i++] = "--add-modules";
-            args[i++] = modulepath;
-        }
-        if (addExports!= null){
-            args[i++] = "--add-exports";
-            args[i++] = modulepath;
-        }
-        for (String option : this.options) {
-            args[i++] = option;
-        }
-        for (String script : scripts) {
-            args[i++] = script;
-        }
-        return args;
     }
 
-    private int getArgumentsSize() {
-        int size = 0;
-        if (useProjectClasspath || classpath != null) {
-            size += 2;
+    private List<String> filterClasspath(List<String> cp) {
+        return cp.stream()
+                .filter(s -> {
+                    Path path = Paths.get(s);
+                    if (Files.notExists(path)){
+                        getLog().warn("Removing: " + s +" from the classpath." + System.lineSeparator() +
+                                "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:" + System.lineSeparator() +
+                                "mvn test-compile com.github.johnpoth:jshell-maven-plugin:1.3:run" + System.lineSeparator() +
+                                "For more information visit https://github.com/johnpoth/jshell-maven-plugin"
+                        );
+                        return false;
+                    }
+                    if (Files.isDirectory(path)) {
+                        return true;
+                    }
+                    if (s.endsWith(".jar")) {
+                        return true;
+                    }
+                    getLog().debug("Removing: " + s +" from the classpath because it is unsupported in JShell.");
+                    return false;
+                }).collect(Collectors.toList());
+    }
+
+    private String[] addArguments(String cp) {
+        List<String> args = new ArrayList<>();
+        if (useProjectClasspath) {
+            args.add("--class-path");
+            args.add(cp);
+        } else if (classpath != null ){
+            args.add("--class-path");
+            args.add(classpath);
         }
-        if (modulepath != null) {
-            size += 2;
+        if (modulepath != null){
+            args.add("--module-path");
+            args.add(modulepath);
         }
-        if (addModules != null) {
-            size += 2;
+        if (addModules!= null){
+            args.add("--add-modules");
+            args.add(modulepath);
         }
-        if (addExports != null) {
-            size += 2;
+        if (addExports!= null){
+            args.add("--add-exports");
+            args.add(modulepath);
         }
-        return size;
+        for (String option : this.options) {
+            args.add(option);
+        }
+        for (String script : scripts) {
+            args.add(script);
+        }
+        return args.toArray(new String[0]);
     }
 }
