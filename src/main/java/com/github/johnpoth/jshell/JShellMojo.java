@@ -141,11 +141,11 @@ public class JShellMojo extends AbstractMojo
         }
         if (addModules!= null){
             args.add("--add-modules");
-            args.add(modulepath);
+            args.add(addModules);
         }
         if (addExports!= null){
             args.add("--add-exports");
-            args.add(modulepath);
+            args.add(addExports);
         }
         for (String option : this.options) {
             args.add(option);
