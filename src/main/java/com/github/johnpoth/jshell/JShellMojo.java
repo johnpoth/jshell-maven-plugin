@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -43,6 +44,9 @@ public class JShellMojo extends AbstractMojo
 
     @Parameter(defaultValue = "${project.testClasspathElements}", property = "trcp", required = true)
     private List<String> testClasspathElements;
+
+    @Parameter(property = "plugin.artifacts", required = true, readonly = true)
+    private List<Artifact> pluginArtifacts;
 
     @Parameter(defaultValue = "false", property = "testClasspath")
     private boolean testClasspath;
@@ -95,15 +99,22 @@ public class JShellMojo extends AbstractMojo
     }
 
     private String buildClasspath() {
+        final List<String> classpathElements = new ArrayList<>();
         if (testClasspath) {
-            testClasspathElements = filterClasspath(testClasspathElements);
-            return testClasspathElements.stream()
-                    .reduce("", (a, b) -> a + File.pathSeparator + b);
+            classpathElements.addAll(filterClasspath(testClasspathElements));
         } else {
-            runtimeClasspathElements = filterClasspath(runtimeClasspathElements);
-            return filterClasspath(runtimeClasspathElements).stream()
-                    .reduce("", (a, b) -> a + File.pathSeparator  + b);
+            classpathElements.addAll(filterClasspath(runtimeClasspathElements));
         }
+
+        if (!pluginArtifacts.isEmpty()) {
+            classpathElements.addAll(
+                    pluginArtifacts.stream()
+                            .map(artifact -> artifact.getFile().getAbsolutePath())
+                            .collect(Collectors.toList())
+            );
+        }
+        return filterClasspath(classpathElements).stream()
+                .reduce("", (a, b) -> a + File.pathSeparator + b);
     }
 
     private List<String> filterClasspath(List<String> cp) {
