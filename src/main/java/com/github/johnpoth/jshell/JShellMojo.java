@@ -85,7 +85,10 @@ public class JShellMojo extends AbstractMojo
                     .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
                     .get();
             String[] args = addArguments(cp);
-            jshell.run(System.in, System.out, System.err, args);
+            int exitCode = jshell.run(System.in, System.out, System.err, args);
+            if (exitCode != 0) {
+                throw new MojoExecutionException("An error was encountered while executing. Exit code:" + exitCode);
+            }
         } finally {
             Thread.currentThread().setContextClassLoader(contextClassLoader);
         }
