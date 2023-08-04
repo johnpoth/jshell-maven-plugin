@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,16 +16,6 @@
  */
 package com.github.johnpoth.jshell;
 
-import javax.tools.Tool;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -34,10 +24,21 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
+import javax.tools.Tool;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
-@Mojo( name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST )
-public class JShellMojo extends AbstractMojo
-{
+
+@Mojo(name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST)
+public class JShellMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${project.runtimeClasspathElements}", property = "rcp", required = true)
     private List<String> runtimeClasspathElements;
@@ -72,6 +73,14 @@ public class JShellMojo extends AbstractMojo
     // additional options that may be added in future Java releases.
     @Parameter(property = "jshell.options")
     private List<String> options = new ArrayList<>();
+
+    /**
+     * Execution property overrides.
+     *
+     * Any property defined here will take precedence over any other definition.
+     */
+    @Parameter
+    private Map<String, String> properties;
 
     public void execute() throws MojoExecutionException {
         String cp = buildClasspath();
@@ -121,8 +130,8 @@ public class JShellMojo extends AbstractMojo
         return cp.stream()
                 .filter(s -> {
                     Path path = Paths.get(s);
-                    if (Files.notExists(path)){
-                        getLog().warn("Removing: " + s +" from the classpath." + System.lineSeparator() +
+                    if (Files.notExists(path)) {
+                        getLog().warn("Removing: " + s + " from the classpath." + System.lineSeparator() +
                                 "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:" + System.lineSeparator() +
                                 "mvn test-compile com.github.johnpoth:jshell-maven-plugin:1.3:run" + System.lineSeparator() +
                                 "For more information visit https://github.com/johnpoth/jshell-maven-plugin"
@@ -135,7 +144,7 @@ public class JShellMojo extends AbstractMojo
                     if (s.endsWith(".jar")) {
                         return true;
                     }
-                    getLog().debug("Removing: " + s +" from the classpath because it is unsupported in JShell.");
+                    getLog().debug("Removing: " + s + " from the classpath because it is unsupported in JShell.");
                     return false;
                 }).collect(Collectors.toList());
     }
@@ -145,25 +154,30 @@ public class JShellMojo extends AbstractMojo
         if (useProjectClasspath) {
             args.add("--class-path");
             args.add(cp);
-        } else if (classpath != null ){
+        } else if (classpath != null) {
             args.add("--class-path");
             args.add(classpath);
         }
-        if (modulepath != null){
+        if (modulepath != null) {
             args.add("--module-path");
             args.add(modulepath);
         }
-        if (addModules!= null){
+        if (addModules != null) {
             args.add("--add-modules");
             args.add(addModules);
         }
-        if (addExports!= null){
+        if (addExports != null) {
             args.add("--add-exports");
             args.add(addExports);
         }
         for (String option : this.options) {
             args.add(option);
         }
+
+        if (this.properties != null) {
+            this.properties.forEach((key, value) -> args.add("-R -D" + key + "=" + value));
+        }
+
         for (String script : scripts) {
             args.add(script);
         }

@@ -57,6 +57,8 @@ scripts|Add startup scripts to JShell ',' delimited||
 
 useProjectClasspath|Use project class path in JShell|True|
 
+properties| Configure Java properties||
+
 options| Add other options to JShell. See https://docs.oracle.com/javase/9/tools/jshell.htm#GUID-C337353B-074A-431C-993F-60C226163F00__OPTIONSFORJSHELL-AF4AC615[docs]||
 |===
 
