@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,6 +49,9 @@ public class JShellMojo extends AbstractMojo {
 
     @Parameter(property = "plugin.artifacts", required = true, readonly = true)
     private List<Artifact> pluginArtifacts;
+
+    @Parameter(defaultValue = "true", property = "runtimeClasspath")
+    private boolean runtimeClasspath;
 
     @Parameter(defaultValue = "false", property = "testClasspath")
     private boolean testClasspath;
@@ -76,15 +80,13 @@ public class JShellMojo extends AbstractMojo {
 
     /**
      * Execution property overrides.
-     *
+     * <p>
      * Any property defined here will take precedence over any other definition.
      */
     @Parameter
     private Map<String, String> properties;
 
     public void execute() throws MojoExecutionException {
-        String cp = buildClasspath();
-        getLog().debug("Using classpath: " + cp);
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
         ClassLoader classLoader = module.get().getClassLoader();
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
@@ -97,7 +99,7 @@ public class JShellMojo extends AbstractMojo {
                     .findAny()
                     .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
                     .get();
-            String[] args = addArguments(cp);
+            String[] args = addArguments();
             int exitCode = jshell.run(System.in, System.out, System.err, args);
             if (exitCode != 0) {
                 throw new MojoExecutionException("An error was encountered while executing. Exit code:" + exitCode);
@@ -110,11 +112,14 @@ public class JShellMojo extends AbstractMojo {
     private String buildClasspath() {
         final List<String> classpathElements = new ArrayList<>();
         if (testClasspath) {
-            classpathElements.addAll(filterClasspath(testClasspathElements));
-        } else {
-            classpathElements.addAll(filterClasspath(runtimeClasspathElements));
+            classpathElements.addAll(testClasspathElements);
         }
-
+        if (runtimeClasspath) {
+            classpathElements.addAll(runtimeClasspathElements);
+        }
+        if (classpath != null) {
+            classpathElements.addAll(Arrays.asList(classpath.split(File.pathSeparator)));
+        }
         if (!pluginArtifacts.isEmpty()) {
             classpathElements.addAll(
                     pluginArtifacts.stream()
@@ -149,14 +154,15 @@ public class JShellMojo extends AbstractMojo {
                 }).collect(Collectors.toList());
     }
 
-    private String[] addArguments(String cp) {
+    private String[] addArguments() {
         List<String> args = new ArrayList<>();
         if (useProjectClasspath) {
+            String cp = buildClasspath();
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Using classpath: " + cp);
+            }
             args.add("--class-path");
             args.add(cp);
-        } else if (classpath != null) {
-            args.add("--class-path");
-            args.add(classpath);
         }
         if (modulepath != null) {
             args.add("--module-path");
@@ -170,17 +176,15 @@ public class JShellMojo extends AbstractMojo {
             args.add("--add-exports");
             args.add(addExports);
         }
-        for (String option : this.options) {
-            args.add(option);
-        }
+
+        args.addAll(this.options);
 
         if (this.properties != null) {
             this.properties.forEach((key, value) -> args.add("-R -D" + key + "=" + value));
         }
 
-        for (String script : scripts) {
-            args.add(script);
-        }
+        args.addAll(scripts);
+
         return args.toArray(new String[0]);
     }
 }
