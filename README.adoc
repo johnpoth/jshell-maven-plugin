@@ -6,7 +6,7 @@ Maven Plugin for the Java Shell Tool ( https://docs.oracle.com/javase/9/jshell/i
 
 [source,shell]
 ----
-$mvn compile com.github.johnpoth:jshell-maven-plugin:1.3:run
+$mvn compile com.github.johnpoth:jshell-maven-plugin:1.4:run
 |  Welcome to JShell -- Version 10
 |  For an introduction type: /help intro
 jshell>
@@ -24,19 +24,19 @@ jshell>
 To you use your project's test classpath, add *-DtestClasspath* to the command and make sure you have compiled your test classes:
 [source,shell]
 ----
-$mvn test-compile com.github.johnpoth:jshell-maven-plugin:1.3:run
+$mvn test-compile com.github.johnpoth:jshell-maven-plugin:1.4:run
 ----
 
 If you notice some resources missing, you may have to invoke the `install` phase instead:
 [source,shell]
 ----
-$mvn install com.github.johnpoth:jshell-maven-plugin:1.3:run -DskipTests
+$mvn install com.github.johnpoth:jshell-maven-plugin:1.4:run -DskipTests
 ----
 
 Once you project has been built properly, and you haven't updated your source files, you can skip the building phase and invoke the plugin directly:
 [source,shell]
 ----
-$mvn com.github.johnpoth:jshell-maven-plugin:1.3:run
+$mvn com.github.johnpoth:jshell-maven-plugin:1.4:run
 ----
 
 == Options
@@ -61,7 +61,7 @@ options| Add other options to JShell. See https://docs.oracle.com/javase/9/tools
 |===
 
 Reminder: plugin parameters when passed through the command line should be prefixed with 'jshell.' e.g:
- *mvn com.github.johnpoth:jshell-maven-plugin:1.3:run -Djshell.scripts="script0,script1"*
+ *mvn com.github.johnpoth:jshell-maven-plugin:1.4:run -Djshell.scripts="script0,script1"*
 
 == Adding to pom.xml
 
@@ -74,7 +74,7 @@ To use the plugin's shortened prefix *jshell*, declare the plugin in your pom.xm
     <plugin>
       <groupId>com.github.johnpoth</groupId>
       <artifactId>jshell-maven-plugin</artifactId>
-      <version>1.3</version>
+      <version>1.4</version>
     </plugin>
   </plugins>
 </pluginManagement>
