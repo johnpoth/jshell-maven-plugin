@@ -35,6 +35,8 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
+
 
 @Mojo(name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST)
 public class JShellMojo extends AbstractMojo {
@@ -128,7 +130,7 @@ public class JShellMojo extends AbstractMojo {
                                         "mvn test-compile com.github.johnpoth:jshell-maven-plugin:%s:run%n" +
                                         "For more information visit https://github.com/johnpoth/jshell-maven-plugin",
                                 s,
-                                "1.3"
+                                ofNullable(this.getClass().getPackage().getImplementationVersion()).orElse("RELEASE")
                         ));
                         return false;
                     }
