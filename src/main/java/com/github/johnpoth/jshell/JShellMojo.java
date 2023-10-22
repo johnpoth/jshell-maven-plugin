@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,16 +16,6 @@
  */
 package com.github.johnpoth.jshell;
 
-import javax.tools.Tool;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -34,10 +24,26 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
+import javax.tools.Tool;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
-@Mojo( name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST )
-public class JShellMojo extends AbstractMojo
-{
+
+@Mojo(name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST)
+public class JShellMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${project.runtimeClasspathElements}", property = "rcp", required = true)
     private List<String> runtimeClasspathElements;
@@ -73,15 +79,18 @@ public class JShellMojo extends AbstractMojo
     @Parameter(property = "jshell.options")
     private List<String> options = new ArrayList<>();
 
+    @Parameter(property = "jshell.non-interactive")
+    private boolean nonInteractive = false;
+
     public void execute() throws MojoExecutionException {
         String cp = buildClasspath();
         getLog().debug("Using classpath: " + cp);
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
-        ClassLoader classLoader = module.get().getClassLoader();
+        Optional<ClassLoader> classLoader = module.map(Module::getClassLoader);
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(classLoader);
+        try (InputStream input = getInputStream()) {
+            classLoader.ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
             ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
             Tool jshell = sl.stream()
                     .filter(a -> a.get().name().equals("jshell"))
@@ -89,12 +98,46 @@ public class JShellMojo extends AbstractMojo
                     .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
                     .get();
             String[] args = addArguments(cp);
-            int exitCode = jshell.run(System.in, System.out, System.err, args);
+
+            int exitCode = jshell.run(input, System.out, System.err, args);
             if (exitCode != 0) {
                 throw new MojoExecutionException("An error was encountered while executing. Exit code:" + exitCode);
             }
+        } catch (IOException e) {
+            throw new MojoExecutionException("Unable to read input script file(s)", e);
         } finally {
             Thread.currentThread().setContextClassLoader(contextClassLoader);
+        }
+    }
+
+    private InputStream getInputStream() {
+        if (nonInteractive) {
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Non-interactive mode. inject script in stdin:" + String.join(", ", scripts));
+            }
+            return new SequenceInputStream(Collections.enumeration(
+                    scripts.stream()
+                            .map(this::scriptToInputStream)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList())
+            ));
+        } else {
+            return System.in;
+        }
+    }
+
+    private InputStream scriptToInputStream(String scriptPath) {
+        final Path path = Paths.get(scriptPath);
+        if (!Files.isRegularFile(path)) {
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Not a regular file: " + scriptPath);
+            }
+            return null;
+        }
+        try {
+            return new BufferedInputStream(Files.newInputStream(path));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Unable to read input script file(s)", e);
         }
     }
 
@@ -121,8 +164,8 @@ public class JShellMojo extends AbstractMojo
         return cp.stream()
                 .filter(s -> {
                     Path path = Paths.get(s);
-                    if (Files.notExists(path)){
-                        getLog().warn("Removing: " + s +" from the classpath." + System.lineSeparator() +
+                    if (Files.notExists(path)) {
+                        getLog().warn("Removing: " + s + " from the classpath." + System.lineSeparator() +
                                 "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:" + System.lineSeparator() +
                                 "mvn test-compile com.github.johnpoth:jshell-maven-plugin:1.3:run" + System.lineSeparator() +
                                 "For more information visit https://github.com/johnpoth/jshell-maven-plugin"
@@ -135,7 +178,7 @@ public class JShellMojo extends AbstractMojo
                     if (s.endsWith(".jar")) {
                         return true;
                     }
-                    getLog().debug("Removing: " + s +" from the classpath because it is unsupported in JShell.");
+                    getLog().debug("Removing: " + s + " from the classpath because it is unsupported in JShell.");
                     return false;
                 }).collect(Collectors.toList());
     }
@@ -145,27 +188,32 @@ public class JShellMojo extends AbstractMojo
         if (useProjectClasspath) {
             args.add("--class-path");
             args.add(cp);
-        } else if (classpath != null ){
+        } else if (classpath != null) {
             args.add("--class-path");
             args.add(classpath);
         }
-        if (modulepath != null){
+        if (modulepath != null) {
             args.add("--module-path");
             args.add(modulepath);
         }
-        if (addModules!= null){
+        if (addModules != null) {
             args.add("--add-modules");
             args.add(addModules);
         }
-        if (addExports!= null){
+        if (addExports != null) {
             args.add("--add-exports");
             args.add(addExports);
         }
         for (String option : this.options) {
             args.add(option);
         }
-        for (String script : scripts) {
-            args.add(script);
+        if (nonInteractive) {
+            args.add("-");
+        }
+        else {
+            for (String script : scripts) {
+                args.add(script);
+            }
         }
         return args.toArray(new String[0]);
     }
