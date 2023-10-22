@@ -46,6 +46,10 @@
     </distributionManagement>
 
     <properties>
+        <!-- Configuring for Reproducible Builds (cf. https://maven.apache.org/guides/mini/guide-reproducible-builds.html) -->
+        <!--suppress UnresolvedMavenProperty -->
+        <project.build.outputTimestamp>${git.commit.timestamp.datetime}</project.build.outputTimestamp>
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -122,6 +126,30 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addBuildEnvironmentEntries>true</addBuildEnvironmentEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <!--suppress UnresolvedMavenProperty -->
+                            <Implementation-SCM-Revision-Number>${git.commit}</Implementation-SCM-Revision-Number>
+                            <!--suppress UnresolvedMavenProperty -->
+                            <Implementation-SCM-Revision-Date>${git.commit.timestamp.datetime}</Implementation-SCM-Revision-Date>
+                            <!--suppress UnresolvedMavenProperty -->
+                            <Implementation-Full-Version>${project.version}-${git.commit}</Implementation-Full-Version>
+                            <Java-Version>${java.version}</Java-Version>
+                            <Java-Vendor>${java.vendor}</Java-Vendor>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>

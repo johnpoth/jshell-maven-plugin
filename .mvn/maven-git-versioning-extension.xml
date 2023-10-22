@@ -1,0 +1,22 @@
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="https://github.com/qoomon/maven-git-versioning-extension" xsi:schemaLocation="https://github.com/qoomon/maven-git-versioning-extension https://qoomon.github.io/maven-git-versioning-extension/configuration-7.0.0.xsd">
+	<refs>
+		<ref type="branch">
+			<pattern>.+</pattern>
+			<!--
+				Uncomment following line when implementing Maven CI Friendly Versions: https://maven.apache.org/maven-ci-friendly.html
+			<version>${ref}-SNAPSHOT</version>
+			-->
+			<version>${version}</version>
+		</ref>
+
+		<ref type="tag">
+			<pattern><![CDATA[^v?(?<version>\d+\.\d+\.\d+.*)$]]></pattern>
+			<version>${ref.version}</version>
+		</ref>
+	</refs>
+
+	<!-- optional fallback configuration in case of no matching ref configuration-->
+	<rev>
+		<version>${commit}</version>
+	</rev>
+</configuration>
