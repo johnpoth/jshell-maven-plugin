@@ -59,9 +59,9 @@ useProjectClasspath|Use project class path in JShell|True|
 
 properties| Configure Java properties||
 
-runtimeClasspath| Add `./target/classes` in classpath|`true`|
+runtimeClasspath| Add `./target/classes` in classpath|`false`|
 
-testClasspath| Add `./target/test-classes` in classpath|`false`|
+testClasspath| Add `./target/test-classes` in classpath|`true`|
 
 options| Add other options to JShell. See https://docs.oracle.com/javase/9/tools/jshell.htm#GUID-C337353B-074A-431C-993F-60C226163F00__OPTIONSFORJSHELL-AF4AC615[docs]||
 |===
